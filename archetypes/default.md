@@ -1,5 +1,5 @@
 +++
-title = '{{ replace .File.ContentBaseName "-" " " | title }}'
+title = ''
 date = {{ .Date }}
-draft = true
+slug = '{{ .File.UniqueID }}'
 +++
