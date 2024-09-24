@@ -84,8 +84,8 @@ params:
       url: "https://github.com/gingk1212"
 
   analytics:
-    # google:
-    #   SiteVerificationTag: "XYZabc"
+    google:
+      SiteVerificationTag: "G-D510MY43LN"
     # bing:
     #   SiteVerificationTag: "XYZabc"
     # yandex:
