@@ -84,8 +84,8 @@ params:
       url: "https://github.com/gingk1212"
 
   analytics:
-    google:
-      SiteVerificationTag: "G-D510MY43LN"
+    # google:
+    #   SiteVerificationTag: "XYZabc"
     # bing:
     #   SiteVerificationTag: "XYZabc"
     # yandex:
@@ -155,3 +155,7 @@ outputs:
 # remove the categories taxonomy
 taxonomies:
   tag: tags
+
+services:
+  googleAnalytics:
+    ID: G-D510MY43LN
