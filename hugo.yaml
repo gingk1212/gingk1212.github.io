@@ -145,6 +145,9 @@ markup:
     # codeFences: true
     # guessSyntax: true
     # lineNos: true
+  goldmark:
+    renderer:
+      unsafe: true
 
 outputs:
   home:
