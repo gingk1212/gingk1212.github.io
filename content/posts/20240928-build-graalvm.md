@@ -5,7 +5,7 @@ slug = '34f2d9d91c05126ef05570b0993b9534'
 tags = ['GraalVM']
 showtoc = true
 +++
-最近 GraalVM に興味があり、ここ1、2週間ほどいろいろ触ってみている。ここ数年仕事で Java を使っているというのと自分がもともと低いレイヤーの技術、ソフトウェアに興味があるので趣味で触る題材としてちょうどよさそうというのが興味を持ったきっかけである。とはいえ興味があるのは GraalVM の使い方のほうではなく、GraalVM 自体がどのように動いているのか、その仕組みについてである。GraalVM を使ってネイティブバイナリをビルドしてみた的な話題はよく見かけるが GraalVM 自体の動きなどについての話は多くは見かけないので自分用のメモがてら残しておく。今回は GraalVM のビルドについて。なお、GraalVM には大きく分けて JIT compiler, Native Image, 多言語プログラミング対応の3つの機能があるが、Native Image 機能に最も興味があるため今後は主に Native Image について記載していく。
+最近 GraalVM に興味があり、ここ1、2週間ほどいろいろ触ってみている。ここ数年仕事で Java を使っているというのと自分がもともと低いレイヤーの技術、ソフトウェアに興味があるので趣味で触る題材としてちょうどよさそうというのが興味を持ったきっかけである。とはいえ興味があるのは GraalVM を使って何ができるかではなく、GraalVM 自体がどのように動いているのか、その仕組みについてである。GraalVM を使ってネイティブバイナリをビルドしてみた的な話題はよく見かけるが GraalVM 自体の動きなどについての話は多くは見かけないので自分用のメモがてら残しておく。今回は GraalVM のビルドについて。なお、GraalVM には大きく分けて JIT compiler, Native Image, 多言語プログラミング対応の3つの機能があるが、Native Image 機能に最も興味があるため今後は主に Native Image について記載していく。
 
 - 公式サイト: <a href="https://www.graalvm.org/" target="_blank">graalvm.org</a>
 - リポジトリ: <a href="https://github.com/oracle/graal" target="_blank">github.com/oracle/graal</a>
