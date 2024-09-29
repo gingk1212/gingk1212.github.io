@@ -142,6 +142,13 @@ Archiving GRAAL_TEST_PREVIEW_FEATURE... [dependency jdk.graal.compiler.hotspot.j
 Archiving GRAAL_COMPILER_WHITEBOX_MICRO_BENCHMARKS... [dependency jdk.graal.compiler.virtual.bench updated]
 ```
 
+なお、GraalVM のバージョンはこちらのコマンドで確認できる。今回は 24.2.0-dev を使用している。
+
+```
+$ mx graalvm-version
+24.2.0-dev
+```
+
 ## 使ってみる
 
 無事にビルドできたので試しに使ってみる。こちらも mx コマンドが使える。
