@@ -119,7 +119,7 @@ $ apt install zlib1g-dev
 
 > Substrate VM is an internal project name for the technology behind GraalVM Native Image.
 
-リポジトリをクローンしてディレクトリ移動。なお、mx には suite という概念があり、コマンドは suite に対して実行される。suite はオプションで明示的に指定することもできるが、指定がない場合は今いるディレクトリが suite となる。つまり、下記の場合の suite は `substratevm` ということになる。詳しくは mx の <a href="https://github.com/graalvm/mx/blob/master/README.md" target="_blank">README</a> を参照されたし。
+リポジトリをクローンしてディレクトリ移動。なお、mx には suite という概念があり、コマンドは primary suite に対して実行される。primary suite はオプションで明示的に指定することもできるが、指定がない場合は今いるディレクトリが primary suite となる。つまり、下記の場合の primary suite は `substratevm` ということになる。詳しくは mx の <a href="https://github.com/graalvm/mx/blob/master/README.md" target="_blank">README</a> を参照されたし。
 
 ```
 $ git clone https://github.com/oracle/graal.git
@@ -147,6 +147,17 @@ Archiving GRAAL_COMPILER_WHITEBOX_MICRO_BENCHMARKS... [dependency jdk.graal.comp
 ```
 $ mx graalvm-version
 24.2.0-dev
+```
+
+また、primary suite と関連する suite のコミットハッシュはこちらのコマンドで確認できる。
+
+```
+$ mx sversions
+b9aa8b8b24ab  substratevm /home/gingk/work/202409_graalvm/graal
+b9aa8b8b24ab  compiler /home/gingk/work/202409_graalvm/graal
+b9aa8b8b24ab  truffle /home/gingk/work/202409_graalvm/graal
+b9aa8b8b24ab  sdk /home/gingk/work/202409_graalvm/graal
+b9aa8b8b24ab  regex /home/gingk/work/202409_graalvm/graal
 ```
 
 ## 使ってみる
