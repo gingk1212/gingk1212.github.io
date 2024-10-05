@@ -120,7 +120,9 @@ Enable debuginfod for this session? (y or [n]) y
 Debuginfod has been enabled.
 To make this setting permanent, add 'set debuginfod enabled on' to .gdbinit.
 Downloading separate debug info for system-supplied DSO at 0x7ffff7fc3000
-Downloading separate debug info for /lib/x86_64-linux-gnu/libz.so.1                                                         [Thread debugging using libthread_db enabled]                                                                               Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+Downloading separate debug info for /lib/x86_64-linux-gnu/libz.so.1
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 [New Thread 0x7ffff747f6c0 (LWP 90246)]
 
 Thread 1 "helloworld" hit Breakpoint 1, HelloWorld::main(java.lang.String[]*) (args=java.lang.String[0])
