@@ -239,7 +239,7 @@ public synchronized Throwable fillInStackTrace() {
 
 例によって根気強く追っていくと、なんと `fillInStackTrace` メソッドに行き着いた。ただし、そのクラスは `NullPointerException` クラスではなく `JavaLangSubstitutions` というクラスだった。
 
-- <a href="https://github.com/oracle/graal/blob/a7cae0179c3516c6073179f08a48a151c96ad0d7/substratevm/src/com.oracle.svm.core/src/com/oracle/svm/core/jdk/JavaLangSubstitutions.java#L603" target="_blank">JavaLangSubstitutions.java#L603</a>
+- <a href="https://github.com/oracle/graal/blob/85203705d949d9f5e6ad83986bde0015c7f2821a/substratevm/src/com.oracle.svm.core/src/com/oracle/svm/core/jdk/JavaLangSubstitutions.java#L603" target="_blank">JavaLangSubstitutions.java#L603</a>
 
 ```java
 /**
@@ -258,7 +258,7 @@ Substitutions という名の通り、GraalVM では何らかの理由でその�
 
 ちなみに、これは Issue の<a href="https://github.com/oracle/graal/issues/9680#issuecomment-2356599598" target="_blank">コメント</a>にも書いてあることだが、`getExtendedNPEMessage` メソッドも `JavaLangSubstitutions` に書かれている。中身は空っぽ。
 
-- <a href="https://github.com/oracle/graal/blob/a7cae0179c3516c6073179f08a48a151c96ad0d7/substratevm/src/com.oracle.svm.core/src/com/oracle/svm/core/jdk/JavaLangSubstitutions.java#L609" target="_blank">JavaLangSubstitutions.java#L609</a>
+- <a href="https://github.com/oracle/graal/blob/85203705d949d9f5e6ad83986bde0015c7f2821a/substratevm/src/com.oracle.svm.core/src/com/oracle/svm/core/jdk/JavaLangSubstitutions.java#L609" target="_blank">JavaLangSubstitutions.java#L609</a>
 
 ```java
     @Substitute
