@@ -1,5 +1,6 @@
 baseURL: https://gingk1212.github.io/
 languageCode: ja
+hasCJKLanguage: true
 title: gingkのブログ
 paginate: 10
 theme: PaperMod
