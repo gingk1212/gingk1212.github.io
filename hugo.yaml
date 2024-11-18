@@ -1,5 +1,6 @@
 baseURL: https://gingk1212.github.io/
 languageCode: ja
+defaultContentLanguage: ja
 hasCJKLanguage: true
 title: gingkのブログ
 paginate: 5
@@ -22,7 +23,7 @@ params:
   # author: Me
   # author: ["Me", "You"] # multiple authors
   # images: ["<link or path of image for opengraph, twitter-cards>"]
-  DateFormat: "Jan 2, 2006"
+  DateFormat: "2006-01-02"
   defaultTheme: auto # dark, light
   disableThemeToggle: true
 
