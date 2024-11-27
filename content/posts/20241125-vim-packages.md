@@ -92,6 +92,14 @@ else
 endif
 ```
 
+(2024.11.27 追記)  
+X にて h_east さんに上記の if 文は `if has("win32")` のみで十分ということを<a href="https://x.com/h_east/status/1861308565740536089" target="_blank">教えていただいた</a>。たしかに `feature-list` のヘルプにそのような記載があった。感謝。
+
+```
+win32			Win32 version of Vim (MS-Windows 95 and later, 32 or
+			64 bits)
+```
+
 ## おわりに
 
 今はせいぜい10個弱くらいしかプラグインを使っていないので、上記の方法でまあまあ問題なく運用できている。標準のパッケージ機能を使った運用の一例として、何かしら参考になればうれしいです。
