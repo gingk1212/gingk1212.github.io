@@ -77,3 +77,105 @@ return p.waitFor();
 ```
 
 おそらくここから本格的にバイナリファイル生成処理に移っていくと思われるが、今回はここまで。
+
+## 追記
+
+2024.12.31 追記
+
+native-image ファイルはシェルスクリプト、と記載したが、native-image ファイルを実行形式としてビルドすることも可能だった。たとえば substratevm ディレクトリで、`mx graalvm-show` コマンドを実行した結果が以下。
+
+```
+$ mx graalvm-show
+...
+Launchers:
+ - native-image (bash, rebuildable)
+ - native-image-configure (bash, rebuildable)
+ - polyglot (bash, rebuildable)
+Libraries:
+ - libjvmcicompiler.so (skipped, rebuildable)
+ - libnative-image-agent.so (skipped, rebuildable)
+ - libnative-image-diagnostics-agent.so (skipped, rebuildable)
+ - libsvmjdwp.so (skipped, rebuildable)
+No standalone
+```
+
+`native-image (bash, rebuildable)` と記載されている通り、このまま `mx build` を実行すると native-image はシェルスクリプトとして生成される。では、今度は `--print-env` というオプションを指定して実行してみる。
+
+```
+$ mx graalvm-show --print-env
+...
+Inferred env file:
+DYNAMIC_IMPORTS=/compiler,/regex,/sdk,/substratevm,/truffle
+COMPONENTS=antlr4,cmp,dis,icu4j,lg,llp,nfi,nfi-libffi,ni,nic,nil,nju,poly,rgx,sdk,sdkc,sdkl,sdkni,svm,svmjdwp,svml,svmnfi,svmsl,svmt,tfl,tfla,tflc,tflm,tflp,tflsm,truffle-json,xz
+EXCLUDE_COMPONENTS=libpoly
+NATIVE_IMAGES=false
+NON_REBUILDABLE_IMAGES=False
+```
+
+すると、先ほどの出力結果に加えて上記の通り環境変数の設定状況も表示される。気になるのは `NATIVE_IMAGES=false` という部分。こちらを true にして再度実行。
+
+```
+$ NATIVE_IMAGES=true mx graalvm-show --print-env
+...
+Launchers:
+ - native-image (native, rebuildable)
+ - native-image-configure (native, rebuildable)
+ - polyglot (native, rebuildable)
+Libraries:
+ - libjvmcicompiler.so (native, rebuildable)
+ - libnative-image-agent.so (native, rebuildable)
+ - libnative-image-diagnostics-agent.so (native, rebuildable)
+ - libsvmjdwp.so (native, rebuildable)
+No standalone
+Inferred env file:
+DYNAMIC_IMPORTS=/compiler,/regex,/sdk,/substratevm,/truffle
+COMPONENTS=antlr4,cmp,dis,icu4j,lg,llp,nfi,nfi-libffi,ni,nic,nil,nju,poly,rgx,sdk,sdkc,sdkl,sdkni,svm,svmjdwp,svml,svmnfi,svmsl,svmt,tfl,tfla,tflc,tflm,tflp,tflsm,truffle-json,xz
+EXCLUDE_COMPONENTS=libpoly
+NATIVE_IMAGES=lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent,lib:svmjdwp,native-image,native-image-configure,polyglot
+NON_REBUILDABLE_IMAGES=False
+```
+
+すると、先ほどは `bash` と表示されていた箇所が軒並み `native` に変わっている。ついでに Libraries の項目も `skipped` から `native` に変わっている。`NATIVE_IMAGES` の個別指定もできそうなので試してみる。
+
+```
+$ NATIVE_IMAGES=native-image mx graalvm-show --print-env
+...
+Launchers:
+ - native-image (native, rebuildable)
+ - native-image-configure (bash, rebuildable)
+ - polyglot (bash, rebuildable)
+Libraries:
+ - libjvmcicompiler.so (skipped, rebuildable)
+ - libnative-image-agent.so (skipped, rebuildable)
+ - libnative-image-diagnostics-agent.so (skipped, rebuildable)
+ - libsvmjdwp.so (skipped, rebuildable)
+No standalone
+Inferred env file:
+DYNAMIC_IMPORTS=/compiler,/regex,/sdk,/substratevm,/truffle
+COMPONENTS=antlr4,cmp,dis,icu4j,lg,llp,nfi,nfi-libffi,ni,nic,nil,nju,poly,rgx,sdk,sdkc,sdkl,sdkni,svm,svmjdwp,svml,svmnfi,svmsl,svmt,tfl,tfla,tflc,tflm,tflp,tflsm,truffle-json,xz
+EXCLUDE_COMPONENTS=libpoly
+NATIVE_IMAGES=native-image
+NON_REBUILDABLE_IMAGES=False
+```
+
+案の定、native-image のみ変更された。それでは `NATIVE_IMAGES=native-image` を指定したうえでビルドを実行する。
+
+```
+$ NATIVE_IMAGES=native-image mx build
+```
+
+生成されたファイルを確認。
+
+```
+$ file ../sdk/latest_graalvm_home/bin/native-image
+../sdk/latest_graalvm_home/bin/native-image: symbolic link to ../lib/svm/bin/native-image
+```
+
+どうやらシンボリックリンクになっているようなので本体のほうを確認。
+
+```
+$ file ../sdk/latest_graalvm_home/lib/svm/bin/native-image
+../sdk/latest_graalvm_home/lib/svm/bin/native-image: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=56742ae6a7b3dd83171eb482a731dd3a43ab302e, for GNU/Linux 3.2.0, stripped
+```
+
+想定通り、シェルスクリプトではなく ELF ファイルが生成されている。
