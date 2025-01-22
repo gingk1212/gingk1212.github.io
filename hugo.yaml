@@ -3,8 +3,10 @@ languageCode: ja
 defaultContentLanguage: ja
 hasCJKLanguage: true
 title: gingkのブログ
-paginate: 5
 theme: PaperMod
+
+pagination:
+  pagerSize: 5
 
 enableRobotsTXT: true
 buildDrafts: false
