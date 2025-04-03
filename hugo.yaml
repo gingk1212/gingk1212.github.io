@@ -87,7 +87,7 @@ params:
     - name: github
       url: "https://github.com/gingk1212"
     - name: rss
-      url: "http://localhost:1313/index.xml"
+      url: "https://gingk1212.github.io/index.xml"
 
   analytics:
     # google:
