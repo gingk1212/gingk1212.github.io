@@ -35,7 +35,7 @@ params:
   ShowBreadCrumbs: true
   ShowCodeCopyButtons: false
   ShowWordCount: false
-  ShowRssButtonInSectionTermList: false
+  ShowRssButtonInSectionTermList: true
   UseHugoToc: true
   disableSpecial1stPost: false
   disableScrollToTop: false
@@ -86,6 +86,8 @@ params:
     #   url: "https://stackoverflow.com"
     - name: github
       url: "https://github.com/gingk1212"
+    - name: rss
+      url: "http://localhost:1313/index.xml"
 
   analytics:
     # google:
