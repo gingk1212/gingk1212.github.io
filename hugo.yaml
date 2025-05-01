@@ -77,7 +77,7 @@ params:
   # home-info mode
   homeInfoParams:
     Title: "Hi there \U0001F44B"
-    Content: 最近は GraalVM に興味があります
+    Content: 低レイヤに興味があります
 
   socialIcons:
     - name: x
