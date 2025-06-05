@@ -19,4 +19,4 @@ showtoc = true
 
 <a href="https://github.com/gingk1212/ymirc" target="_blank">github.com/gingk1212/ymirc</a>
 
-ここからようやくハイパーバイザのパートに突入するところなのだけど、実は一つ大きな問題がある。冒頭に貼ったポストにもある通り、Writing Hypervisor in Zig では Intel の VT-x を使用することを前提として記事が書かれているが、自分の使っている PC は<a href="http://localhost:1313/posts/121bb0791c7972024c36339fa35a3140/" target="_blank">以前の記事</a>でも書いた通り AMD なので AMD-V なるものを使う必要がある。共通点はあると思うけどもちろん別ものなのでここからは自分でがっつり調べながら進める必要がありそうなのであった。
+ここからようやくハイパーバイザのパートに突入するところなのだけど、実は一つ大きな問題がある。冒頭に貼ったポストにもある通り、Writing Hypervisor in Zig では Intel の VT-x を使用することを前提として記事が書かれているが、自分の使っている PC は<a href="https://gingk1212.github.io/posts/121bb0791c7972024c36339fa35a3140/" target="_blank">以前の記事</a>でも書いた通り AMD なので AMD-V なるものを使う必要がある。共通点はあると思うけどもちろん別ものなのでここからは自分でがっつり調べながら進める必要がありそうなのであった。
