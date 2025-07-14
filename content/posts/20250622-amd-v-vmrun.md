@@ -5,7 +5,7 @@ slug = '79d9e88b3251ce982c2c7b36fa456f66'
 tags = ['hypervisor']
 showtoc = true
 +++
-AMD-V (SVM) を使ってゲスト側で HLT 命令をループして実行するだけのシンプルなコードを動かすことができたので、ゲストモードへの移行とホストモードへの復帰の流れをメモしておく。[前回の記事](https://gingk1212.github.io/posts/45c588fea2ee6a5c30400e29e0b695e9/)で書いた AMD-V の有効化はしてある前提。なお、今回参照したドキュメントは <a href="https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf" target="_blank">AMD64 Architecture Programmer's Manual Volume 2: System Programming</a> の主に以下の項目。
+AMD-V (SVM) を使ってゲスト側で HLT 命令をループして実行するだけのシンプルなコードを動かすことができたので、ゲストモードへの移行とホストモードへの復帰の流れをメモしておく。[前回の記事](https://gingk1212.github.io/posts/45c588fea2ee6a5c30400e29e0b695e9/)で書いた AMD-V の有効化はしてある前提。なお、今回参照したドキュメントは <a href="https://docs.amd.com/v/u/en-US/24593_3.43" target="_blank">AMD64 Architecture Programmer's Manual Volume 2: System Programming</a> の主に以下の項目。
 
 - 15.5 VMRUN Instruction
 - 15.6 #VMEXIT

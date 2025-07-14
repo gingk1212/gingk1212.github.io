@@ -7,7 +7,7 @@ showtoc = true
 +++
 AMD 向けのハイパーバイザを自作するにあたって、AMD の仮想化支援機能 AMD-V (あるいは SVM) を有効化する方法を調べたのでメモ。BIOS の設定で有効にするとかの話ではなく、そちらは有効になっている前提でハイパーバイザ実行時に有効化するお話。
 
-AMD のドキュメント <a href="https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf" target="_blank">AMD64 Architecture Programmer's Manual Volume 2: System Programming</a> の「15 Secure Virtual Machine」に SVM に関することが書かれている。こちらの「15.4 Enabling SVM」に記載の内容によると EFER.SVME bit を 1 にセットすると VMRUN などの仮想化関連の CPU 命令が使えるようになるとのこと。EFER とは Extended Feature Enable Register の略で MSR (Model-Specific Register) のアドレス ` C000_0080h` にアクセスすることで読み書きできる。こちらのレジスタは以下の構成となっており、SVME は12番目のビットであることがわかる。(APM Volume 2, 3.1.7)
+AMD のドキュメント <a href="https://docs.amd.com/v/u/en-US/24593_3.43" target="_blank">AMD64 Architecture Programmer's Manual Volume 2: System Programming</a> の「15 Secure Virtual Machine」に SVM に関することが書かれている。こちらの「15.4 Enabling SVM」に記載の内容によると EFER.SVME bit を 1 にセットすると VMRUN などの仮想化関連の CPU 命令が使えるようになるとのこと。EFER とは Extended Feature Enable Register の略で MSR (Model-Specific Register) のアドレス ` C000_0080h` にアクセスすることで読み書きできる。こちらのレジスタは以下の構成となっており、SVME は12番目のビットであることがわかる。(APM Volume 2, 3.1.7)
 
 ![20250611-enable-svm-01.png](../image/20250611-enable-svm-01.png)
 
@@ -27,7 +27,7 @@ else return SVM_DISABLED_WITH_KEY;
   // SVMLock may be unlockable; consult platform firmware or TPM to obtain the key.
 ```
 
-一つ目の if 文では CPUID 命令を使用している。CPUID 命令により取得できる情報については <a href="https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24594.pdf" target="_blank">AMD64 Architecture Programmer’s Manual Volume 3: General-Purpose and System Instructions</a> の「Appendix E Obtaining Processor Information Via the CPUID Instruction」を参照。`Fn8000_0001_ECX[SVM]` に関する説明は以下の通り。こちらのビットが立っていなかったら SVM は使用不可能ということになる。(APM Volume 3, E.4.2)
+一つ目の if 文では CPUID 命令を使用している。CPUID 命令により取得できる情報については <a href="https://docs.amd.com/v/u/en-US/24594_3.37" target="_blank">AMD64 Architecture Programmer’s Manual Volume 3: General-Purpose and System Instructions</a> の「Appendix E Obtaining Processor Information Via the CPUID Instruction」を参照。`Fn8000_0001_ECX[SVM]` に関する説明は以下の通り。こちらのビットが立っていなかったら SVM は使用不可能ということになる。(APM Volume 3, E.4.2)
 
 ![20250611-enable-svm-02.png](../image/20250611-enable-svm-02.png)
 
