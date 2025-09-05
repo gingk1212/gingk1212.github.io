@@ -1,6 +1,6 @@
 +++
 title = 'ハイパーバイザ自作中に遭遇したバグたち'
-date = 2025-09-05T19:00:00+09:00
+date = 2025-09-05T18:00:00+09:00
 slug = '1a15157dfc699a2a8d806d80b5326868'
 tags = ['hypervisor']
 showtoc = true
