@@ -4,6 +4,9 @@ name: Sync upstream
 #   - themes/PaperMod サブモジュールを上流の最新に更新する
 # ビルドが通ることを確認したうえで main に push する (push により Build and deploy が走る)。
 #
+# 更新があった回だけ、更新内容の概要をまとめた Issue を作成する (GitHub モバイルアプリに通知が届く)。
+# 更新がなかった回は何も通知しない。
+#
 # .github/workflows/ 配下は GITHUB_TOKEN では push できないため、
 # secrets.WORKFLOW_UPDATE_TOKEN に PAT が必要:
 #   - Fine-grained PAT: このリポジトリに対して Contents = Read and write, Workflows = Read and write
@@ -14,6 +17,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  issues: write
 defaults:
   run:
     shell: bash
@@ -56,34 +60,123 @@ jobs:
             fi
           done
 
-      - name: Read the tool versions from the docs
+      - name: Read the tool versions
         id: versions
         run: |
           set -euo pipefail
+          read_version() { # <file> <key>
+            awk -F': *' -v k="${2}_VERSION" '$1 ~ "^ +"k"$" {print $2; exit}' "${1}" | tr -d '[:space:]'
+          }
           for key in HUGO DART_SASS; do
-            value="$(awk -F': *' -v k="${key}_VERSION" '$1 ~ "^ +"k"$" {print $2; exit}' \
-              "${RUNNER_TEMP}/upstream.yaml" | tr -d '[:space:]')"
+            value="$(read_version "${RUNNER_TEMP}/upstream.yaml" "${key}")"
             if [[ -z "${value}" ]]; then
               echo "::error::${key}_VERSION をドキュメントから読み取れませんでした。"
               exit 1
             fi
             echo "${key,,}=${value}" >> "${GITHUB_OUTPUT}"
           done
+          # 更新前の Hugo のバージョン。通知に載せるだけなので、読めなくてもここでは止めない。
+          echo "hugo_before=$(read_version "${TARGET}" HUGO)" >> "${GITHUB_OUTPUT}"
 
       - name: Apply upstream updates
         id: apply
+        env:
+          HUGO_BEFORE: ${{ steps.versions.outputs.hugo_before }}
+          HUGO_AFTER: ${{ steps.versions.outputs.hugo }}
+          SUMMARY: ${{ runner.temp }}/summary.md
         run: |
           set -euo pipefail
+
+          # 更新後にコミットログの差分を出すため、サブモジュールの更新前 SHA を控えておく。
+          mapfile -t submodules < <(
+            git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}' || true
+          )
+          declare -A before_sha
+          for path in "${submodules[@]}"; do
+            before_sha["${path}"]="$(git -C "${path}" rev-parse HEAD)"
+          done
+
           cp "${RUNNER_TEMP}/upstream.yaml" "${TARGET}"
           git submodule update --remote --recursive
+
           if git diff --quiet -- "${TARGET}" themes; then
             echo "changed=false" >> "${GITHUB_OUTPUT}"
             echo "上流に更新はありません。"
-          else
-            echo "changed=true" >> "${GITHUB_OUTPUT}"
-            git diff --stat -- "${TARGET}" themes
-            git diff -- "${TARGET}"
+            exit 0
           fi
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+          git diff --stat -- "${TARGET}" themes
+
+          # ここから通知用のサマリ (Markdown) を組み立てる。
+          # headline_parts は Issue のタイトルに使う「何が変わったか」の要約。
+          headline_parts=()
+          {
+            echo "\`Sync upstream\` が上流の更新を \`${GITHUB_REF_NAME}\` に反映しました。"
+            echo
+          } > "${SUMMARY}"
+          if [[ "${HUGO_BEFORE}" != "${HUGO_AFTER}" ]]; then
+            headline_parts+=("Hugo ${HUGO_AFTER}")
+            {
+              echo "## Hugo"
+              echo
+              echo "${HUGO_BEFORE:-?} → ${HUGO_AFTER}"
+              echo
+              echo "リリースノート: https://github.com/gohugoio/hugo/releases/tag/v${HUGO_AFTER}"
+              echo
+            } >> "${SUMMARY}"
+          else
+            {
+              echo "Hugo ${HUGO_AFTER} (変更なし)"
+              echo
+            } >> "${SUMMARY}"
+          fi
+
+          for path in "${submodules[@]}"; do
+            old="${before_sha["${path}"]}"
+            new="$(git -C "${path}" rev-parse HEAD)"
+            if [[ "${old}" == "${new}" ]]; then
+              continue
+            fi
+            headline_parts+=("$(basename "${path}") ${new:0:7}")
+            url="$(git config -f .gitmodules --get "submodule.${path}.url" | sed 's/\.git$//')"
+            count="$(git -C "${path}" rev-list --count "${old}..${new}" 2>/dev/null || echo '?')"
+            {
+              echo "## ${path}"
+              echo
+              echo "\`${old:0:7}\` → \`${new:0:7}\` (コミット ${count} 件)"
+              echo
+              # 上流が rebase 等をしていて old..new を辿れない場合はログを諦め、compare リンクだけ残す。
+              git -C "${path}" log -n 50 --pretty='- %s (`%h`)' "${old}..${new}" 2>/dev/null \
+                || echo "- (コミットログを取得できませんでした)"
+              echo
+              echo "変更全体: ${url}/compare/${old}...${new}"
+              echo
+            } >> "${SUMMARY}"
+          done
+
+          if ! git diff --quiet -- "${TARGET}"; then
+            {
+              echo "## ${TARGET}"
+              echo
+              echo "<details><summary>差分を表示</summary>"
+              echo
+              echo '```diff'
+              git diff -- "${TARGET}"
+              echo '```'
+              echo
+              echo "</details>"
+              echo
+            } >> "${SUMMARY}"
+          fi
+
+          title='Upstream sync'
+          if ((${#headline_parts[@]} > 0)); then
+            printf -v joined '%s, ' "${headline_parts[@]}"
+            title="Upstream sync: ${joined%, }"
+          fi
+          echo "title=${title}" >> "${GITHUB_OUTPUT}"
+
+          cat "${SUMMARY}" >> "${GITHUB_STEP_SUMMARY}"
 
       # push すると Build and deploy がそのまま走るため、先に実際にビルドできるか確かめる。
       # ここで落ちれば push されず、公開中のサイトは現状のまま維持される。
@@ -124,3 +217,26 @@ jobs:
             -m "hugo.yaml source: ${DOC_PAGE}" \
             -m "$(git submodule status --cached)"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      # 更新があった回だけ Issue を立てる。Watch している通知が GitHub モバイルアプリに届き、
+      # 更新内容を後から読み返せる記録にもなる。
+      - name: Open an issue with the summary
+        if: steps.apply.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SUMMARY: ${{ runner.temp }}/summary.md
+          TITLE: ${{ steps.apply.outputs.title }}
+        run: |
+          set -euo pipefail
+          {
+            echo "---"
+            echo
+            echo "- コミット: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/$(git rev-parse HEAD)"
+            echo "- 実行ログ: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } >> "${SUMMARY}"
+          issue="$(gh issue create --title "${TITLE}" --body-file "${SUMMARY}")"
+          echo "${issue}"
+          # assign できなくても通知自体は届くので、失敗してもワークフローは落とさない。
+          gh issue edit "${issue}" --add-assignee "${GITHUB_REPOSITORY_OWNER}" \
+            || echo "::warning::Issue の assign に失敗しました: ${issue}"
