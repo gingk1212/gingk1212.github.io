@@ -1,0 +1,126 @@
+name: Sync upstream
+# 週1回、上流の更新に追従する:
+#   - .github/workflows/hugo.yaml を Hugo 公式ドキュメントの内容に合わせる (Hugo のバージョン更新等)
+#   - themes/PaperMod サブモジュールを上流の最新に更新する
+# ビルドが通ることを確認したうえで main に push する (push により Build and deploy が走る)。
+#
+# .github/workflows/ 配下は GITHUB_TOKEN では push できないため、
+# secrets.WORKFLOW_UPDATE_TOKEN に PAT が必要:
+#   - Fine-grained PAT: このリポジトリに対して Contents = Read and write, Workflows = Read and write
+#   - Classic PAT の場合は repo + workflow スコープ
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      DOC_SOURCE: https://raw.githubusercontent.com/gohugoio/hugoDocs/master/content/en/host-and-deploy/host-on-github-pages/index.md
+      DOC_PAGE: https://gohugo.io/host-and-deploy/host-on-github-pages/
+      TARGET: .github/workflows/hugo.yaml
+      TZ: Asia/Tokyo
+    steps:
+      - name: Verify the token is configured
+        env:
+          TOKEN: ${{ secrets.WORKFLOW_UPDATE_TOKEN }}
+        run: |
+          if [[ -z "${TOKEN}" ]]; then
+            echo "::error::secrets.WORKFLOW_UPDATE_TOKEN が未設定です。Contents と Workflows に write 権限を持つ PAT を登録してください。"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_UPDATE_TOKEN }}
+
+      - name: Extract the workflow YAML from the Hugo docs
+        run: |
+          set -euo pipefail
+          curl -sfL "${DOC_SOURCE}" -o "${RUNNER_TEMP}/docs.md"
+          awk '/^[[:space:]]*```yaml/{f=1;next} f&&/^[[:space:]]*```/{exit} f{sub(/^  /,"");print}' \
+            "${RUNNER_TEMP}/docs.md" > "${RUNNER_TEMP}/upstream.yaml"
+          # 抽出に失敗したまま空ファイルで上書きしないよう、内容を検証する
+          for marker in '^name: Build and deploy' '^  deploy:' 'actions/deploy-pages@' 'HUGO_VERSION:'; do
+            if ! grep -q "${marker}" "${RUNNER_TEMP}/upstream.yaml"; then
+              echo "::error::${DOC_PAGE} からのワークフロー抽出に失敗しました (ページ構成が変わった可能性があります)。"
+              exit 1
+            fi
+          done
+
+      - name: Read the tool versions from the docs
+        id: versions
+        run: |
+          set -euo pipefail
+          for key in HUGO DART_SASS; do
+            value="$(awk -F': *' -v k="${key}_VERSION" '$1 ~ "^ +"k"$" {print $2; exit}' \
+              "${RUNNER_TEMP}/upstream.yaml" | tr -d '[:space:]')"
+            if [[ -z "${value}" ]]; then
+              echo "::error::${key}_VERSION をドキュメントから読み取れませんでした。"
+              exit 1
+            fi
+            echo "${key,,}=${value}" >> "${GITHUB_OUTPUT}"
+          done
+
+      - name: Apply upstream updates
+        id: apply
+        run: |
+          set -euo pipefail
+          cp "${RUNNER_TEMP}/upstream.yaml" "${TARGET}"
+          git submodule update --remote --recursive
+          if git diff --quiet -- "${TARGET}" themes; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "上流に更新はありません。"
+          else
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+            git diff --stat -- "${TARGET}" themes
+            git diff -- "${TARGET}"
+          fi
+
+      # push すると Build and deploy がそのまま走るため、先に実際にビルドできるか確かめる。
+      # ここで落ちれば push されず、公開中のサイトは現状のまま維持される。
+      - name: Smoke test the build
+        if: steps.apply.outputs.changed == 'true'
+        env:
+          HUGO_VERSION: ${{ steps.versions.outputs.hugo }}
+          DART_SASS_VERSION: ${{ steps.versions.outputs.dart_sass }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.local/hugo"
+          curl -sfL --output-dir "${RUNNER_TEMP}" -O "https://github.com/sass/dart-sass/releases/download/${DART_SASS_VERSION}/dart-sass-${DART_SASS_VERSION}-linux-x64.tar.gz"
+          tar -C "${HOME}/.local" -xf "${RUNNER_TEMP}/dart-sass-${DART_SASS_VERSION}-linux-x64.tar.gz"
+          curl -sfL --output-dir "${RUNNER_TEMP}" -O "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_${HUGO_VERSION}_linux-amd64.tar.gz"
+          tar -C "${HOME}/.local/hugo" -xf "${RUNNER_TEMP}/hugo_${HUGO_VERSION}_linux-amd64.tar.gz"
+          export PATH="${HOME}/.local/dart-sass:${HOME}/.local/hugo:${PATH}"
+          git config --global core.quotepath false
+          hugo version
+          if ! hugo build --gc --minify --destination "${RUNNER_TEMP}/smoke-public"; then
+            echo "::error::Hugo ${HUGO_VERSION} と最新テーマの組み合わせでビルドに失敗しました。push しません。手動で対応してください。"
+            exit 1
+          fi
+          if [[ ! -s "${RUNNER_TEMP}/smoke-public/index.html" ]]; then
+            echo "::error::ビルドは成功しましたが index.html が生成されませんでした。push しません。"
+            exit 1
+          fi
+
+      - name: Commit and push
+        if: steps.apply.outputs.changed == 'true'
+        env:
+          HUGO_VERSION: ${{ steps.versions.outputs.hugo }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "${TARGET}" themes
+          git commit -m "Sync with upstream (Hugo ${HUGO_VERSION})" \
+            -m "hugo.yaml source: ${DOC_PAGE}" \
+            -m "$(git submodule status --cached)"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
