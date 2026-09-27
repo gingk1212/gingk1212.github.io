@@ -1,4 +1,13 @@
 name: Build and deploy
+env:
+  # Define tool versions
+  DART_SASS_VERSION: 1.104.0
+  GO_VERSION: 1.27.0
+  HUGO_VERSION: 0.166.0
+  NODE_VERSION: 24.20.0
+
+  # Set the build time zone
+  TZ: Europe/Oslo
 on:
   push:
     branches:
@@ -17,15 +26,6 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      # Define tool versions
-      DART_SASS_VERSION: 1.104.0
-      GO_VERSION: 1.27.0
-      HUGO_VERSION: 0.166.0
-      NODE_VERSION: 24.20.0
-
-      # Set the build time zone
-      TZ: Europe/Oslo
     steps:
       - name: Checkout
         uses: actions/checkout@v7
