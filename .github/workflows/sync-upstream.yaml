@@ -26,8 +26,8 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     env:
-      DOC_SOURCE: https://raw.githubusercontent.com/gohugoio/hugoDocs/master/content/en/host-and-deploy/host-on-github-pages/index.md
-      DOC_PAGE: https://gohugo.io/host-and-deploy/host-on-github-pages/
+      DOC_SOURCE: https://raw.githubusercontent.com/gohugoio/hugoDocs/master/content/en/host-and-deploy/deploy-to-github-pages/index.md
+      DOC_PAGE: https://gohugo.io/host-and-deploy/deploy-to-github-pages/
       TARGET: .github/workflows/hugo.yaml
       TZ: Asia/Tokyo
     steps:
